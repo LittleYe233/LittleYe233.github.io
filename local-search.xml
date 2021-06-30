@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>【Python|RPG】Continuous Infinity制作实录 - EP.1 框架</title>
+    <link href="/2021/06/30/techdev/continuous-infinity/ep-1/"/>
+    <url>/2021/06/30/techdev/continuous-infinity/ep-1/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    <categories>
+      
+      <category>Record</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Python</tag>
+      
+      <tag>RPG</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>记一次Linux服务器迁移&amp;部署实录</title>
     <link href="/2021/06/21/techdev/linux-server-deployment/"/>
     <url>/2021/06/21/techdev/linux-server-deployment/</url>
@@ -33,7 +60,7 @@
   
   
   <entry>
-    <title>【Minecraf研究日志】干翻Mod的数据包实战 - EP.1 跳跃获得随机物品和放置TNT</title>
+    <title>【Minecraft研究日志】干翻Mod的数据包实战 - EP.1 跳跃获得随机物品和放置TNT</title>
     <link href="/2021/06/14/minecraft/datapacks/jump-and-items-and-tnt/"/>
     <url>/2021/06/14/minecraft/datapacks/jump-and-items-and-tnt/</url>
     
