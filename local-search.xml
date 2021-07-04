@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="/2021/07/04/hello-world/"/>
+    <url>/2021/07/04/hello-world/</url>
+    
+    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>【Python|RPG】Continuous Infinity制作实录 - EP.1 框架</title>
+    <link href="/2021/06/30/techdev/continuous-infinity/ep-1/"/>
+    <url>/2021/06/30/techdev/continuous-infinity/ep-1/</url>
+    
+    <content type="html"><![CDATA[<p>我们这次将开始利用Python制作一款简易的TRPG，原载地址在<a href="http://tieba.baidu.com/p/6120244130">百度贴吧</a>，名字在很久以前已经想好——《Continuous Infinity》，这个名字出自刚立项时的想法——最终实现自动生成无限多的关卡。</p><p>为了使本文简洁明了，这个系列就不废话了 <del>(希望如此)</del> 。</p><h2 id="Part-I-规划"><a href="#Part-I-规划" class="headerlink" title="Part I. 规划"></a>Part I. 规划</h2><p>从总体上看整个游戏流程，应该可以分成以下几步：</p><ol><li>主页：进行游戏配置，选择进入或退出游戏；</li><li>主体：游戏主体部分，<strong>项目的核心</strong>；<ol><li>接受玩家操作，产生效果；</li><li>检查是否达到退出条件；</li><li>程序作出操作，产生效果；</li><li>检查是否达到退出条件；</li></ol></li><li>退出游戏或回到1.。</li></ol><p>游戏的主要形式即是玩家操纵角色与其他角色 (程序控制的敌人) 进行对战，互相攻击对方，直至一方血量归零，触发事件，执行后续操作——玩家死亡结算、敌方给出新角色、进入下一关等。由此可以归纳出游戏时需要<strong>定义</strong>的“<strong>具体事物</strong>”有<strong>角色 (mob) 、物品 (item) (包括装备、道具) 、技能 (skill) 等</strong>，稍抽象一点的是<strong>关卡 (level)</strong> (需要定义每个关卡的敌方角色的各种信息) 。</p><h2 id="Part-II-源码结构"><a href="#Part-II-源码结构" class="headerlink" title="Part II. 源码结构"></a>Part II. 源码结构</h2><p>继而我们可以给出如下的源码结构作为参考：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">.<br>│  run.py<br>│<br>├─game<br>│  │  system.py<br>│  │<br>│  ├─data<br>│  │  ├─items<br>│  │  ├─levels<br>│  │  ├─mobs<br>│  │  └─skills<br>│  ├─generator<br>│  │      levels.py<br>│  │<br>│  ├─loader<br>│  │      items.py<br>│  │      levels.py<br>│  │      mobs.py<br>│  │      skills.py<br>│  │<br>│  └─locales<br>└─test<br>        .keep<br></code></pre></td></tr></table></figure><p>其中<code>run.py</code>是游戏启动的脚本；<code>test</code>文件夹存放单元测试的相关内容；<code>game</code>文件夹存放本游戏的主体内容，包括游戏的绝大多数逻辑、上文所说的具体事物的定义和设计等；<code>game/data</code>文件夹存放的即是所谓的“设计”；<code>game/generator</code>文件夹存放游戏的生成器，用以自定义一系列具体事物以及其自动生成算法；<code>game/loader</code>文件夹存放游戏的加载器，用以读取<code>game/data</code>定义的内容；<code>game/locales</code>文件夹存放游戏的多语言文件 <em>(锦上添花而已，不重要)</em> 。</p><h2 id="Part-III-具体事物的信息存储和对战系统逻辑"><a href="#Part-III-具体事物的信息存储和对战系统逻辑" class="headerlink" title="Part III. 具体事物的信息存储和对战系统逻辑"></a>Part III. 具体事物的信息存储和对战系统逻辑</h2><p>前文提到了对战系统的主要形式是回合制，而较为精细的逻辑则需要涉及到一些具体事物的“使用——生效”机制。当开始某个角色 (不论是玩家还是敌方角色) 的回合时，这个角色可以选择出招 (skill) ，也可以选择使用道具 (item) 增益己方或损害对方，亦可以临时装备一些物品 (item)，或是执行系统级操作——逃跑 (假设未来某天加入游戏中) 、投降 (同上) 、退出当前对局等。不过其中需要伤点脑子的是如何有效地存储一些具体事物的各种信息，以及如何让具体事物在对战时产生效果。</p><p>在早期的设计过程中，笔者写出了如下的代码来存储角色的信息：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Mob</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span> <span class="hljs-comment"># Player and enemy</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, <span class="hljs-built_in">type</span>, name, lvl, exp, hp, pp, hpm, ppm, atk, dfd, spd, pack, coin, skill, weapon, helmet, chestplate, leggings, boots</span>):</span><br>        self.<span class="hljs-built_in">type</span> = <span class="hljs-built_in">type</span>                <span class="hljs-comment"># 类型（职业）</span><br>        self.name = name                <span class="hljs-comment"># 名字</span><br>        self.lvl = lvl                  <span class="hljs-comment"># 等级</span><br>        self.exp = exp                  <span class="hljs-comment"># 经验值</span><br>        self.hp = hp                    <span class="hljs-comment"># 血量</span><br>        self.pp = pp                    <span class="hljs-comment"># 技能点</span><br>        self.hpm = hpm                  <span class="hljs-comment"># 血量上限</span><br>        self.ppm = ppm                  <span class="hljs-comment"># 技能点上限</span><br>        self.atk = atk                  <span class="hljs-comment"># 攻击力</span><br>        self.dfd = dfd                  <span class="hljs-comment"># 防御力</span><br>        self.spd = spd                  <span class="hljs-comment"># 迅捷度</span><br>        self.pack = pack                <span class="hljs-comment"># 背包列表</span><br>        self.coin = coin                <span class="hljs-comment"># 金钱</span><br>        self.skill = skill              <span class="hljs-comment"># 技能列表</span><br>        self.weapon = weapon            <span class="hljs-comment"># 武器</span><br>        self.helmet = helmet            <span class="hljs-comment"># 头盔</span><br>        self.chestplate = chestplate    <span class="hljs-comment"># 胸甲</span><br>        self.leggings = leggings        <span class="hljs-comment"># 腿甲</span><br>        self.boots = boots              <span class="hljs-comment"># 靴子</span><br></code></pre></td></tr></table></figure><p>原来的代码中其实连中文注释都没有。但即便按照PEP 8进行格式化，加上了详细的注释，又添上了“docstring”，这段代码依然冗长，而且在定义一个角色的时候需要在参数中加上大量的<code>None</code>，十分不便。这是笔者联想到<code>requests</code>模块的<code>get</code>函数，<code>get</code>函数支持添加许多参数，但模块作者采用了一个较为聪明的方法：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs text">In [2]: requests.get?<br>Signature: requests.get(url, params=None, **kwargs)<br>Docstring:<br>Sends a GET request.<br><br>:param url: URL for the new :class:`Request` object.<br>:param params: (optional) Dictionary, list of tuples or bytes to send<br>    in the body of the :class:`Request`.<br>:param \*\*kwargs: Optional arguments that ``request`` takes.<br>:return: :class:`Response &lt;Response&gt;` object<br>:rtype: requests.Response<br></code></pre></td></tr></table></figure><p>因而我们也可以让定义者显式地传入一个角色的个性化参数，如果没有给出就保持默认值，这样可以极好地便利游戏数据设计者。同时这样的设计可以在形式上将一个角色的所有信息<strong>平权</strong>，作为“字典型”参数传入时，没有明显的次序之分，总体上是优雅和谐的。</p><p>而对于产生效果的方法，一个问题是如何选择目标角色。一项技能和一个物品发挥作用，其目标可以是使用者自身，也可以是己方或对方所有角色，甚至是让使用者自选角色乃至随机角色。为了适应多种需求，我们可以借鉴游戏《Minecraft》上“目标选择器”的机制——利用简单的语法形成的字符串来选择目标。而第二个问题是施加效果，如果便利游戏数据设计者，可以封死自定义复杂函数的通道，只提供一个简单的列表保证一些必要数据 (譬如血量、技能点、装备、物品数量) 的增减；而如果提供充分的自由度，我们可以允许游戏数据设计者向loader提供一个含有指定接口的函数，loader只需利用提供的接口执行更复杂的操作即可。如果为了“双赢”，可以同时实现这两种方式，当然这样的话最累的就是游戏设计者 (其实就是笔者) 。</p><p><strong>【完】</strong></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Record</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Python</tag>
+      
+      <tag>RPG</tag>
+      
+      <tag>Continuous Infinity</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>记一次Linux服务器迁移&amp;部署实录</title>
+    <link href="/2021/06/21/techdev/linux-server-deployment/"/>
+    <url>/2021/06/21/techdev/linux-server-deployment/</url>
+    
+    <content type="html"><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我以前充了阿里云云翼计划的ECS学生机，本来在上面部署了一些私人服务端项目，无奈云翼计划已经被取消，服务器到期死线也将近，正好自己入手了一台树莓派4B，考虑项目的特殊性，遂决定暂时将ECS的重要项目和数据迁移到树莓派上，并重新部署上线项目，同时做好树莓派简易主机的配置工作。现将较详尽的过程记录如下，可供读者参考。</p><p><strong>注意：Raspberry Pi OS和Ubuntu还是有诸多不同，这里的演示还是尽量依照Ubuntu等系统的做法，具体操作时请结合目标机器的实际情况！</strong></p><h2 id="规划"><a href="#规划" class="headerlink" title="规划"></a>规划</h2><p>ECS和树莓派主要参数的对比如下表：</p><table><thead><tr><th align="center">项目</th><th align="center">ECS</th><th align="center">树莓派</th></tr></thead><tbody><tr><td align="center">CPU</td><td align="center">1核</td><td align="center">1核（大概）</td></tr><tr><td align="center">内存</td><td align="center">2GB</td><td align="center">8GB（好贵！）</td></tr><tr><td align="center">硬盘</td><td align="center">40GB SSD</td><td align="center">32GB TF卡（暂定）</td></tr><tr><td align="center">下载带宽</td><td align="center">很大</td><td align="center">取决于住宅以太网和WLAN</td></tr><tr><td align="center">上传带宽</td><td align="center">1Mbps</td><td align="center">取决于住宅以太网和WLAN</td></tr><tr><td align="center">操作系统</td><td align="center">Ubuntu 16.04 64-bit</td><td align="center">Raspberry Pi OS 32-bit（还没看版本号）</td></tr></tbody></table><p>ECS上待迁移的数据主要如下：</p><ul><li>重要设置<ul><li>系统设置</li><li>软件设置</li></ul></li><li>常用软件<ul><li>终端（zsh等）</li><li>编程语言对应编译器和解释器（Python、C++、Java、NodeJS等）</li><li>文本编辑器（VIM）</li><li>数据库相关软件（MySQL、Redis等）</li><li>其他软件（tmux等）</li></ul></li><li>重要资料<ul><li>备份文件</li><li>残留的未备份代码</li><li>数据库</li></ul></li></ul><p>树莓派上其他需要配置的数据主要如下：</p><ul><li>常用软件<ul><li>Minecraft服务端（考虑到内存充足，私服还是可以的）</li></ul></li></ul><p>另外，为了保证本文的协调性，本文不提供树莓派开箱时的种种操作，初始条件即是一台可以进行SSH连接但不连接桌面系统（其实可以使用VNC或Xrdp连接桌面），以保证和ECS一致。</p><h2 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h2><p>考虑到树莓派上面空空如也（似乎还没有VIM），遂决定先在树莓派上进行一些基础配置，之后旧服务器的迁移和新服务器的部署等操作将穿插进行。</p><h3 id="Part-I-树莓派配置（I）"><a href="#Part-I-树莓派配置（I）" class="headerlink" title="Part I. 树莓派配置（I）"></a>Part I. 树莓派配置（I）</h3><h4 id="I-I-SSH网络设置"><a href="#I-I-SSH网络设置" class="headerlink" title="I.I. SSH网络设置"></a>I.I. SSH网络设置</h4><p>先留图证明连上了（照例无视背景图片）：</p><p><img src="/2021/06/21/techdev/linux-server-deployment/images/1-1.png" alt="图1-1 SSH连接"></p><p><img src="/" alt="图1-2 树莓派工作中实物图"></p><p>注：管理服务器时使用root用户较为方便，但这里为了养成一个良好的习惯，故使用Raspberry Pi OS自带的默认用户pi。</p><p>当然用户管理并不是我们的重点。但为什么又要提到SSH的连接呢？这就要考虑到SSH连接时需要输入密码的问题了。我们希望一个复杂的密码可以保护主机的数据，而每次输入冗长的密码时我们又难以确保一次输对，这个时候我们可以依靠RSA公私钥实现免密登录——并且对机器上大部分需要SSH连接的应用有效，例如VS Code的RemoteSSH插件。</p><p>使用<code>ssh-keygen</code>命令生成公钥<code>id_rsa.pub</code>和私钥<code>id_rsa</code>后，用<code>scp</code>命令将公钥上传至树莓派的<code>~/.ssh</code>中，本地保存私钥。当然如果要双方互通的话也可以两边都保留公私钥：</p><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-built_in">PS</span> C:\WINDOWS\system32&gt; <span class="hljs-built_in">cd</span> ~/.ssh<br><span class="hljs-built_in">PS</span> C:\Users\\.ssh&gt; <span class="hljs-built_in">ls</span><br><br><br>    Directory: C:\Users\\.ssh<br><br><br>Mode                 LastWriteTime         Length Name<br>----                 -------------         ------ ----<br><span class="hljs-literal">-a</span>----         <span class="hljs-number">6</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2021</span>   <span class="hljs-number">9</span>:<span class="hljs-number">39</span> PM            <span class="hljs-number">495</span> config<br><span class="hljs-literal">-a</span>----          <span class="hljs-number">6</span>/<span class="hljs-number">8</span>/<span class="hljs-number">2021</span>  <span class="hljs-number">10</span>:<span class="hljs-number">39</span> PM           <span class="hljs-number">1679</span> id_rsa<br><span class="hljs-literal">-a</span>----          <span class="hljs-number">6</span>/<span class="hljs-number">8</span>/<span class="hljs-number">2021</span>  <span class="hljs-number">10</span>:<span class="hljs-number">39</span> PM            <span class="hljs-number">405</span> id_rsa.pub<br><span class="hljs-literal">-a</span>----         <span class="hljs-number">6</span>/<span class="hljs-number">21</span>/<span class="hljs-number">2021</span>   <span class="hljs-number">9</span>:<span class="hljs-number">24</span> PM           <span class="hljs-number">2219</span> known_hosts<br><span class="hljs-literal">-a</span>----         <span class="hljs-number">6</span>/<span class="hljs-number">18</span>/<span class="hljs-number">2021</span>   <span class="hljs-number">9</span>:<span class="hljs-number">09</span> PM           <span class="hljs-number">1353</span> known_hosts.old<br><br><br><span class="hljs-built_in">PS</span> C:\Users\\.ssh&gt; scp id_rsa* pi@<span class="hljs-number">192.168</span>.<span class="hljs-number">0.106</span>:~/.ssh<br>pi@<span class="hljs-number">192.168</span>.<span class="hljs-number">0.106</span><span class="hljs-string">&#x27;s password:</span><br><span class="hljs-string">Permission denied, please try again.</span><br><span class="hljs-string">pi@192.168.0.106&#x27;</span>s password:<br>scp: /home/pi/.ssh: No such file or directory<br><span class="hljs-built_in">PS</span> C:\Users\\.ssh&gt; scp id_rsa* pi@<span class="hljs-number">192.168</span>.<span class="hljs-number">0.106</span>:~/.ssh<br>pi@<span class="hljs-number">192.168</span>.<span class="hljs-number">0.106</span><span class="hljs-string">&#x27;s password:</span><br><span class="hljs-string">id_rsa                                                                                100% 1679     1.6KB/s   00:00</span><br><span class="hljs-string">id_rsa.pub                                                                            100%  405     0.4KB/s   00:00</span><br></code></pre></td></tr></table></figure><p>Powershell终端操作如上，系统用户名已省略。我还输错了一遍密码，第二遍输对了结果<code>scp</code>不支持解析<code>~</code>，还要我输完整路径重输密码……</p><p>上传完成后还要在树莓派上写入<code>~/.ssh/authorized_keys</code>文件：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">pi@littleye233pi:~ $ cd .ssh<br>pi@littleye233pi:~/.ssh $ ls<br>id_rsa  id_rsa.pub<br>pi@littleye233pi:~/.ssh $ cat id_rsa.pub &gt;&gt; authorized_keys<br>pi@littleye233pi:~/.ssh $ cat authorized_keys<br></code></pre></td></tr></table></figure><p>如上。再次测试，已经可以实现免密登录。</p><h4 id="I-II-文本编辑器——VIM和编译安装"><a href="#I-II-文本编辑器——VIM和编译安装" class="headerlink" title="I.II. 文本编辑器——VIM和编译安装"></a>I.II. 文本编辑器——VIM和编译安装</h4><p>VIM算是业界常用文本编辑器了，这里不详细介绍软件的功能了，直接上手。考虑到<code>apt</code>上的软件源可能不是最新的（在ECS上安装时，GitHub上的VIM已经更新到了8.2，而apt上只更新到8.0）；另外VIM具有很多特性，但发行版自带的VIM通常没有很多开启的特性，故我们决定采用编译安装形式。</p><p>源代码编译安装大多需要gcc、make等编译工具，大多数*nix发行版都内置了g++、gcc和make，如若真的没有可以用<code>apt</code>等软件管理工具安装。</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs shell">pi@littleye233pi:~/Documents/code/python $ g++ --version<br>g++ (Raspbian 8.3.0-6+rpi1) 8.3.0<br>Copyright (C) 2018 Free Software Foundation, Inc.<br>This is free software; see the source for copying conditions.  There is NO<br>warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.<br><br>pi@littleye233pi:~/Documents/code/python $ gcc --version<br>gcc (Raspbian 8.3.0-6+rpi1) 8.3.0<br>Copyright (C) 2018 Free Software Foundation, Inc.<br>This is free software; see the source for copying conditions.  There is NO<br>warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.<br><br>pi@littleye233pi:~/Documents/code/python $ make --version<br>GNU Make 4.2.1<br>Built for arm-unknown-linux-gnueabihf<br>Copyright (C) 1988-2016 Free Software Foundation, Inc.<br>License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;<br>This is free software: you are free to change and redistribute it.<br>There is NO WARRANTY, to the extent permitted by law.<br></code></pre></td></tr></table></figure><p>其实编译安装并不是一件非常容易的事——之前在使用ECS时，没有考虑到其不便于管理的特点，安装完又把源码包到处扔或者直接删掉，以至于最后想修改一些软件的特性或查找其安装位置都较为困难。这里我们将更为妥善地进行安装。</p><p>为了简单操作，这里我们可以参考CSDN一位博主的<a href="https://blog.csdn.net/MyJoiT/article/details/82082638">文章</a>，当初我也是借用这篇文章在ECS上装好了VIM。我们只需依次完成“卸载旧VIM——安装依赖——下载源码——安装新VIM——验证是否安装完备”即可。这里只列出代码清单。</p><ol><li>卸载旧VIM</li></ol><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 彻底卸载</span><br>sudo apt remove --purge vi vim-tiny vim vim-runtime gvim vim-common vim-gui-common vim-nox<br><span class="hljs-meta">#</span><span class="bash"> 清除残留</span><br>sudo find / -name &quot;*vim*&quot; &gt; ~/Temp/find_vim_result.txt<br><span class="hljs-meta">#</span><span class="bash"> 手动删除**必要**的文件（但不能删除重要的依赖或系统文件）</span><br>less ~/Temp/find_vim_result.txt<br>sudo rm -f /path/to/file1<br>sudo rm -f /path/to/file2<br></code></pre></td></tr></table></figure><ol start="2"><li>安装依赖</li></ol><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo apt install libncurses5-dev libgnome2-dev libgnomeui-dev libgtk2.0-dev libatk1.0-dev libbonoboui2-dev libcairo2-dev libx11-dev libxpm-dev libxt-dev python-dev python3-dev ruby-dev lua5.1 liblua5.1-dev libperl-dev git<br></code></pre></td></tr></table></figure><ol start="3"><li>下载源码</li></ol><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta">#</span><span class="bash"> 自定义存放软件源码的位置`~/softsrc`和软件安装位置`/usr/<span class="hljs-built_in">local</span>`</span><br>mkdir -p ~/softsrc<br>cd ~/softsrc<br><span class="hljs-meta">#</span><span class="bash"> 考虑到GitHub在国内访问速度感人，我们可以选用Gitee的镜像https://gitee.com/mirrors/vim.git</span><br>git clone https://github.com/vim/vim.git<br></code></pre></td></tr></table></figure><h4 id="I-III-编程语言对应编译器和解释器——Python-3-9-5和PPA"><a href="#I-III-编程语言对应编译器和解释器——Python-3-9-5和PPA" class="headerlink" title="I.III. 编程语言对应编译器和解释器——Python 3.9.5和PPA"></a>I.III. 编程语言对应编译器和解释器——Python 3.9.5和PPA</h4><p>Python也是一个常用的编程语言，目前Python稳定版的最新版本号是3.9.5——不过请注意从3.9版本开始，Python便不再支持Windows 7等操作系统，如果还需要兼容更低版本的Windows请选择3.8。</p><ol><li>编译安装 <strong>（后记：不建议尝试！）</strong></li></ol><p>考虑到内置的Python 2.7或3.5、3.7等版本可能被其他重要的软件依赖，故不建议彻底卸载，我们可以直接用源码安装最新的3.9.5。当然有能力的可以使用Python的第三方库venv进行更高效的版本管理，这里就不赘述了（反正一直都是最新版一把梭）。</p><p>为了简便，我们同样使用CSDN上的文章<a href="https://blog.csdn.net/weixin_43371047/article/details/103763373">《linux python3编译_Linux中源码编译安装Python3》</a>和<a href="https://blog.csdn.net/albertjone/article/details/107173517">《error while loading shared libraries: libpython3.5m.so.1.0》</a>，并省略一些过程。不过博主也告诉我们<strong>新手编译Python源码安装后患无穷</strong>，最好还是使用软件包管理器安装，这里还是先以编译安装做演示，再在下一节说简便许多的添加PPA安装 <del>（其实只是因为一开始没查到Python3.9有PPA）</del>。</p><p>请注意：安装过程需要Python 3的依赖，如果<code>python3</code>的软链指向了一个无法正常使用的Python 3解释器，这会导致编译安装失败（比如我先前编译安装时忘记用<code>ldconfig</code>刷新动态链接库导致Python 3故障，再次编译时就会报错，这个时候就要靠系统内置的Python 3将软链重置了）！</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd ~/Downloads<br><span class="hljs-meta">#</span><span class="bash"> 说实话Python官网速度感人……</span><br>wget https://www.python.org/ftp/python/3.9.5/Python-3.9.5.tar.xz<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> -C：指定解压路径</span><br>tar -xvf Python-3.9.5.tar.xz -C ~/softsrc<br>cd ~/softsrc/Python-3.9.5<br><br>./configure --prefix=/usr/local/python3.9 --enable-shared --enable-optimizations<br>sudo mkdir /usr/local/python3.9<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> `-j`后的整数表示机器核数，这个代替了`make &amp;&amp; sudo make install`</span><br>sudo make -j 4 altinstall<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 添加到系统动态链接库，具体看`sudo ldconfig -v`和`/usr/<span class="hljs-built_in">local</span>/python3.9/bin/python3`返回的报错信息</span><br>sudo ln -s /usr/local/python3.9/lib/libpython3.9.so /usr/local/lib/libpython3.9.so.1.0<br><span class="hljs-meta">#</span><span class="bash"> 刷新系统的动态链接库，保证Python 3.9的lib能被调用</span><br>sudo ldconfig<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 验证Python 3.9能正常使用</span><br>/usr/local/python3.9/bin/python3 --version<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 强制覆盖系统自带的Python 3的软链接</span><br>sudo ln -sf /usr/local/python3.9/bin/python3 /usr/bin/python3<br>sudo ln -sf /usr/local/python3.9/bin/pip3 /usr/bin/pip3<br></code></pre></td></tr></table></figure><ol start="2"><li>PPA</li></ol><p>由于我的树莓派已经安装了Python 3.9.5，故这个PPA的方法未能实际验证，现抽取某站文章<a href="https://ywnz.com/linux/8050.html">《在Ubuntu 20.04系统下安装Python 3.9的两种方法》</a>的主要内容供参考：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo apt update<br>sudo apt install software-properties-common<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> Ubuntu等用户直接使用下面的命令自动添加PPA</span><br>sudo add-apt-repository ppa:deadsnakes/ppa<br><span class="hljs-meta">#</span><span class="bash"> Raspberry Pi OS则需手动添加，参照下文</span><br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 添加python3.9-distutils包，避免pip挂掉</span><br>sudo apt install python3.9 python3.9-distutils<br><br>python3.9 --version<br>python3.9 -m pip --version<br><span class="hljs-meta"></span><br><span class="hljs-meta">#</span><span class="bash"> 强制覆盖系统自带的Python 3的软链接</span><br>sudo ln -sf /usr/local/python3.9/bin/python3 /usr/bin/python3<br>sudo ln -sf /usr/local/python3.9/bin/pip3 /usr/bin/pip3<br></code></pre></td></tr></table></figure><p>对于树莓派用户，需要参考<a href="https://launchpad.net/">https://launchpad.net</a>上的deadsnakes组手动添加：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo nano /etc/apt/sources.list.d/deadsnakes-python.list<br></code></pre></td></tr></table></figure><p>在<code>/etc/apt/sources.list.d/deadsnakes-python.list</code>中键入：</p><figure class="highlight plaintext"><figcaption><span>/etc/apt/sources.list.d/deadsnakes-python.list</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main<br>deb-src http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main<br></code></pre></td></tr></table></figure><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo apt install python3.9<br><span class="hljs-meta">#</span><span class="bash"> 大概率会报错，找到错误信息中“NO_PUBKEY &lt;一串十六进制数字&gt;”</span><br>sudo apt install dirmngr<br>sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys &lt;一串十六进制数字&gt;<br>sudo apt update<br></code></pre></td></tr></table></figure>]]></content>
+    
+    
+    <categories>
+      
+      <category>Record</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Programming</tag>
+      
+      <tag>Server</tag>
+      
+      <tag>Linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>【Minecraft研究日志】干翻Mod的数据包实战 - EP.1 跳跃获得随机物品和放置TNT</title>
+    <link href="/2021/06/14/minecraft/datapacks/jump-and-items-and-tnt/"/>
+    <url>/2021/06/14/minecraft/datapacks/jump-and-items-and-tnt/</url>
+    
+    <content type="html"><![CDATA[<!--LYBLOGMETAauthor: 小叶Little_Yealterlinks:    acfun:    bilibili:    cnblogs:    csdn:    jianshu:    personal_blog:    tieba:    zhihu:license: CC BY-SA 4.0--><p>你说中考完的暑假不给我歇息，让我去上预科班，我还能理解，毕竟中学教育还没有结束。可高考完的暑假还要被拉去上强基计划的培训课我就不能忍了——还让不让我歇歇了？！……</p><p>咳咳，吐槽完当下的内卷教育观念后，现在是翻开新篇章开启新系列的时间。这个系列正如标题所说，是有关游戏Minecraft的数据包的设计的。曾经的Minecraft被红石系统的大佬占据了半壁江山，而近几年Mojang Studio注重将一些代码化的内容安插进游戏中，数据包便算是其一。这下到了本菜鸟三脚猫功夫的用武之地了，于是我思虑少许后便决定开启这个系列。</p><p>当然，虽然系列的主标题上写有“干翻Mod”，但这也是一种夸张，基于Mojang给定的API的数据包开发好比是戴着镣铐跳舞，很多功能无法依赖原版游戏文件实现，但这并不影响我们对此进行研究，事实上也的确获得了不少看似难以完成的成果。而可能与其他人不同的是，我在此系列中将花一定篇幅来描述我制作这个数据包时的想法和实施的过程，而不会再介绍数据包的结构、用法之类，这些是读者应该具有的前置知识——当然如果这样的话这个系列也就像是一些普通的编程项目的实况了——其实在我心目中的确没差了。不过这也意味着这个系列也会包含一定量的代码——其中也将以简洁的Python作为主要呈现方式来展示制作时的一些流程。</p><p>另外，本系列的游戏版本主要为Java Edition 1.16或1.17，如有其他需求会另作说明。</p><hr><p>接下来就是有关本章——也就是EP.1的内容，这个是从<a href="">B站上的一个视频</a>找到的灵感，原视频中UP主在游戏中加载了两个数据包，一个是在跳跃时随机获得一个物品，另一个是在跳跃时在玩家的脚部生成一个即将爆炸的TNT，UP主将在这种世界完成生存挑战。而我们这次将尝试实现这两种数据包。</p><h1 id="1-规划"><a href="#1-规划" class="headerlink" title="1. 规划"></a>1. 规划</h1><p>数据包的运作需要如下三个步骤：</p><ul><li>初始化：数据包逻辑正确执行的前置步骤；</li><li>检测：检测玩家是否跳跃；</li><li>生效：产生对应的效果。</li></ul><p>“初始化”需要牵扯到Minecraft检测玩家是否跳跃的机制——记分板。Minecraft的记分板中有一种特殊的判据“minecraft.custom:minecraft.jump”（早期为“stats.jump”），每当玩家跳跃一次，这个记分板就会给对应玩家的分数增加1，因而我们需要在初始化时创建记分板。</p><p>而“检测”则是高频检查每个玩家的记分板分数是否大于0，若是则<strong>先清空分数</strong>，再施加对应效果（给予物品或生成TNT实体）。为保证全过程的命令执行者都是分数改变者，我们可以使用<code>/execute</code>命令在各指令和触发条件间传递操作者的身份。</p><p>“生效”是本数据包的核心步骤。生成TNT相对来说比较简单，直接使用<code>/summon</code>命令在玩家脚部（也就是玩家所在坐标）生成一个TNT实体即可，且同样用<code>/execute</code>命令执行这个操作。而给予随即物品相对来说困难，因为这牵扯到新版本中一个重要的随机数生成器——战利品表（Loot table）生成器。这个生成器依赖于数据包中自定义的战利品表，给每个奖池（Pool）里的物品（我们这里是几乎所有的物品）施予相同权重，玩家每次跳跃时便用<code>/loot</code>命令将战利品表中的一个物品给予玩家。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Essay</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Programming</tag>
+      
+      <tag>Development</tag>
+      
+      <tag>Minecraft</tag>
+      
+      <tag>Datapacks</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Galgame引擎开发实战</title>
+    <link href="/2021/06/08/techdev/lazuli-engine/"/>
+    <url>/2021/06/08/techdev/lazuli-engine/</url>
+    
+    <content type="html"><![CDATA[<p>今天是2021年6月8日，今年的高考终于结束了。在此先祝各位考生金榜题名（话说我自己就是一个悲惨的考生啊嘤嘤嘤）！且不论考试成绩、名次如何，至少在这个漫长的暑假可以先休息一下了——什么？其他年级还没放假……咳咳咳。</p><p>总之，我在手头上四十多个编程项目中特地选择了这个作为高中毕业后的首发，也算是出于对抛弃许久的编程工具的复习以及回归二次元坑的纪念吧。</p><h1 id="初步规划"><a href="#初步规划" class="headerlink" title="初步规划"></a>初步规划</h1><p>本游戏引擎的名字——正如本文的URL——为“lazuli”，至于名字怎么来的嘛……不重要，嗯~ o(*￣▽￣*)o 而制作的内容主要参考市面上主流的引擎Kirikiri的架构和RenPy的一些形式。为了开发的简便，我们使用Python作为主力开发语言。</p><ul><li>编程语言：Python</li><li>主力库：Pygame</li><li>操作形式：API、新机器语言（参考RenPy的脚本文件）</li><li>实现内容：标题界面、回想系统、CG鉴赏系统、会话系统、人物立绘、CG显示、音乐播放等</li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>Record</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>ACGNM</tag>
+      
+      <tag>Programming</tag>
+      
+      <tag>Development</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>我的高中三年</title>
+    <link href="/2021/06/06/my-senior-high/"/>
+    <url>/2021/06/06/my-senior-high/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>变态王子与不笑猫</title>
+    <link href="/2021/06/06/the-hentai-prince-and-the-stony-cat/essay/"/>
+    <url>/2021/06/06/the-hentai-prince-and-the-stony-cat/essay/</url>
+    
+    <content type="html"><![CDATA[<h1 id="测试标题"><a href="#测试标题" class="headerlink" title="测试标题"></a>测试标题</h1>]]></content>
+    
+    
+    <categories>
+      
+      <category>Essay</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>ACGNM</tag>
+      
+      <tag>Mixture</tag>
+      
+      <tag>变态王子与不笑猫</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  
+</search>

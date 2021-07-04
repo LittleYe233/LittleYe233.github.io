@@ -1,0 +1,26 @@
+name: sync_from_github
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Sync to Gitee
+      #   uses: wearerequired/git-mirror-action@master
+      #   env:
+      #     SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_GITPAGE_SYNC_PRIVATE_KEY }}
+      #   with:
+      #     source-repo: git@github.com:LittleYe233/LittleYe233.github.io.git
+      #     destination-repo: git@gitee.com:littleye233/littleye233.git
+
+      - name: Build Gitee Pages
+        uses: yanglbme/gitee-pages-action@main
+        with:
+          gitee-username: littleye233
+          gitee-password: ${{ secrets.GITEE_PASSWORD }}
+          gitee-repo: littleye233/littleye233
+          branch: master
